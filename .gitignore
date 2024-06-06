@@ -1,0 +1,6 @@
+# ignore the .vscode folder
+.vscode/
+
+# ignore all binaries
+*.exe
+*.dll
