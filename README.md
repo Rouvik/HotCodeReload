@@ -87,6 +87,17 @@ while (choice != 'q')
 }
 ```
 
+### The shared library code, note the `extern "C"` this is important to prevent C++ name mangling:
+``` C++
+extern "C"
+{
+    void mathFunc(int a, int b)
+    {
+        std::cout << "Add: " << (a + b) << '\n';
+    }
+}
+```
+
 # Notable issues:
 The library compiles fine on most windows platforms but on mingw, g++ disallows casting of FARPROC
 pointers, thus on `mingw:g++ and mingw:gcc` you are required to compile it with `-fpermissive` flag

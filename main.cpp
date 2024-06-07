@@ -7,6 +7,7 @@ int main()
     maintainer.addSymbol("printText");
     if (maintainer.loadSymbols())
     {
+        std::cout << "Failed to load symbols\n";
         return 1;
     }
 

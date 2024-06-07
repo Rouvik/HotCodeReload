@@ -1,5 +1,5 @@
 #include <iostream>
-#include <vector>
+#include <unordered_map>
 #include <windows.h>
 #include <winbase.h>
 
@@ -31,13 +31,7 @@ public:
     LPCSTR libraryName;
     HINSTANCE library;
 
-    struct SymbolContainer
-    {
-        FARPROC pointer;
-        LPCSTR symbolName;
-    };
-
-    std::vector<struct SymbolContainer> symbols;
+    std::unordered_map<const char *, FARPROC> symbols;
 
     HotLibraryMaintainer(const char *_libraryName) : libraryName(_libraryName)
     {
@@ -51,8 +45,7 @@ public:
 
     void addSymbol(const char *symbol)
     {
-        symbols.push_back({NULL,
-                           (LPCSTR)symbol});
+        symbols[symbol] = NULL;
     }
 
     bool loadSymbols()
@@ -64,10 +57,10 @@ public:
         }
 
         bool status = false;
-        for (struct SymbolContainer &container : symbols)
+        for (auto &symbol : symbols)
         {
-            container.pointer = loadLibrarySymbol(library, container.symbolName);
-            status |= container.pointer == NULL;
+            symbol.second = loadLibrarySymbol(library, symbol.first);
+            status |= symbol.second == NULL;
         }
 
         return status;
@@ -109,15 +102,15 @@ public:
 
     FARPROC getSymbolPointer(const char *symbolName)
     {
-        for (int i = 0; i < symbols.size(); i++)
+        try
         {
-            if (strcmp(symbols.at(i).symbolName, symbolName) == 0)
-            {
-                return symbols.at(i).pointer;
-            }
+            return symbols.at(symbolName);
         }
-
-        return NULL;
+        catch(const std::exception& e)
+        {
+            std::cerr << "Failed to find symbol in symbol table error: " << e.what() << '\n';
+            return NULL;
+        }
     }
 
     static HINSTANCE getSharedLibrary(const char *libName)
