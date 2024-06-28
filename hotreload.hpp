@@ -1,7 +1,50 @@
+/*
+MIT License
+
+Copyright (c) 2024 Rouvik Maji
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+
+#ifndef INCLUDED_HOTRELOAD_HPP
+#define INCLUDED_HOTRELOAD_HPP
+
 #include <iostream>
 #include <unordered_map>
 #include <windows.h>
 #include <winbase.h>
+
+// debug logs -------------------------------------
+#ifdef HOT_LOGGING_ENABLE
+
+#define log(type, message) \
+std::cout << "[" << #type << " LOG] " << message << '\n'
+
+#define err(type, message) \
+std::cerr << "[" << #type << " ERROR] " << message << '\n'
+
+#else
+
+#define log(type, message)
+#define err(type, message)
+#endif
 
 // WINDOWS DEBUG ----------------------------------
 #define WIN_ERR_MSG_SIZE 512
@@ -48,11 +91,23 @@ public:
         symbols[symbol] = NULL;
     }
 
+    void removeSymbol(const char *symbol)
+    {
+        if (symbols.find(symbol) != symbols.end())
+        {
+            symbols.erase(symbol);
+        }
+        else
+        {
+            err(HOT_RELOAD_REMOVE_SYMBOL, "Failed to remove symbol: " << symbol << " from DLL: " << libraryName);
+        }
+    }
+
     bool loadSymbols()
     {
         if (library == NULL)
         {
-            std::cerr << "Failed to load symbols, library is NULL, please call loadLibrary() first\n";
+            err(HOT_RELOAD_LOAD_SYMBOLS, "Failed to load symbols, library is NULL, please call loadLibrary() first");
             return true;
         }
 
@@ -89,7 +144,7 @@ public:
             if(!FreeLibrary(library))
             {
                 WPrintLastErrorMessage(library);
-                std::cerr << "Failed to free library " << libraryName << '\n';
+                err(HOT_RELOAD_RELEASE_LIBRARY, "Failed to free library " << libraryName);
             }
             library = NULL;
         }
@@ -108,7 +163,7 @@ public:
         }
         catch(const std::exception& e)
         {
-            std::cerr << "Failed to find symbol in symbol table error: " << e.what() << '\n';
+            err(HOT_RELOAD_GET_SYMBOL_POINTER, "Failed to find symbol in symbol table error: " << e.what());
             return NULL;
         }
     }
@@ -118,7 +173,7 @@ public:
         HINSTANCE library = LoadLibrary((LPCSTR)libName);
         if (library == NULL)
         {
-            std::cerr << "Error, failed to load shared library\n";
+            err(HOT_RELOAD_GET_SHARED_LIBRARY_STATIC_INTERNALS, "Failed to load shared library");
             WPrintLastErrorMessage(library);
             FreeLibrary(library);
         }
@@ -131,10 +186,16 @@ public:
         FARPROC addr = GetProcAddress(library, (LPCSTR)symbolName);
         if (addr == NULL)
         {
-            std::cerr << "Error, failed to get address of function " << symbolName << '\n';
+            err(HOT_RELOAD_LOAD_LIBRARY_SYMBOL_STATIC_INTERNALS, "Failed to get address of function " << symbolName);
             WPrintLastErrorMessage(library);
         }
 
         return addr;
     }
 };
+
+// turn of logging
+#undef log
+#undef err
+
+#endif // INCLUDED_HOTRELOAD_HPP

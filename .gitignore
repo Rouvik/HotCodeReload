@@ -2,5 +2,5 @@
 .vscode/
 
 # ignore all binaries
-*.exe
-*.dll
+**/*.exe
+**/*.dll
