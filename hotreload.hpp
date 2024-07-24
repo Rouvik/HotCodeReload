@@ -53,7 +53,7 @@ void WPrintLastErrorMessage(HINSTANCE instance)
     DWORD dwErr;
     CHAR wmsgBuf[WIN_ERR_MSG_SIZE];
     DWORD dwNumChars;
-    dwNumChars = FormatMessage(FORMAT_MESSAGE_FROM_HMODULE |
+    dwNumChars = FormatMessageA(FORMAT_MESSAGE_FROM_HMODULE |
                                    FORMAT_MESSAGE_IGNORE_INSERTS,
                                instance,
                                dwErr,
@@ -66,6 +66,7 @@ void WPrintLastErrorMessage(HINSTANCE instance)
         std::cerr << "WINDOWS ERROR: " << wmsgBuf << "\n";
     }
 }
+
 // WINDOWS DEBUG ----------------------------------
 
 class HotLibraryMaintainer
@@ -170,7 +171,7 @@ public:
 
     static HINSTANCE getSharedLibrary(const char *libName)
     {
-        HINSTANCE library = LoadLibrary((LPCSTR)libName);
+        HINSTANCE library = LoadLibraryA(libName);
         if (library == NULL)
         {
             err(HOT_RELOAD_GET_SHARED_LIBRARY_STATIC_INTERNALS, "Failed to load shared library");

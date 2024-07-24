@@ -4,3 +4,6 @@
 # ignore all binaries
 **/*.exe
 **/*.dll
+
+# ignore any build directory
+**/build
